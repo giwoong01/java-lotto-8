@@ -40,4 +40,8 @@ public class PurchaseAmount {
         return value / LOTTO_PRICE;
     }
 
+    public int getValue() {
+        return value;
+    }
+
 }

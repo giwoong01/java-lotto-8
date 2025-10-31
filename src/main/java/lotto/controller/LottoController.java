@@ -1,9 +1,13 @@
 package lotto.controller;
 
+import java.util.Map;
 import lotto.domain.BonusNumber;
 import lotto.domain.LottoIssuer;
+import lotto.domain.LottoRank;
+import lotto.domain.LottoResult;
 import lotto.domain.Lottos;
 import lotto.domain.PurchaseAmount;
+import lotto.domain.WinningLotto;
 import lotto.domain.WinningNumbers;
 import lotto.view.InputView;
 import lotto.view.OutputView;
@@ -21,14 +25,18 @@ public class LottoController {
     }
 
     public void run() {
-        Lottos lottos = purchaseLottos();
-        WinningNumbers winningNumbers = getWinningNumbers();
-        BonusNumber bonusNumber = getBonusNumber(winningNumbers);
+        PurchaseAmount purchaseAmount = getPurchaseAmount();
+        Lottos lottos = purchaseLottos(purchaseAmount);
+        WinningLotto winningLotto = setUpWinningLotto();
 
+        Map<LottoRank, Integer> statistics = lottos.calculateStatistics(winningLotto);
+
+        LottoResult lottoResult = new LottoResult(statistics);
+        outputView.printWinningStatistics(lottoResult);
+        outputView.printProfitRate(lottoResult.calculateProfitRate(purchaseAmount));
     }
 
-    private Lottos purchaseLottos() {
-        PurchaseAmount purchaseAmount = getPurchaseAmount();
+    private Lottos purchaseLottos(PurchaseAmount purchaseAmount) {
         Lottos lottos = lottoIssuer.issue(purchaseAmount);
         outputView.printPurchasedLottos(lottos);
         return lottos;
@@ -65,6 +73,12 @@ public class LottoController {
                 outputView.printErrorMessage(e.getMessage());
             }
         }
+    }
+
+    private WinningLotto setUpWinningLotto() {
+        WinningNumbers winningNumbers = getWinningNumbers();
+        BonusNumber bonusNumber = getBonusNumber(winningNumbers);
+        return new WinningLotto(winningNumbers, bonusNumber);
     }
 
 }
