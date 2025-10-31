@@ -59,8 +59,8 @@ public class WinningNumbers {
         }
     }
 
-    public List<Integer> getNumbers() {
-        return List.copyOf(numbers);
+    public boolean contains(int number) {
+        return this.numbers.contains(number);
     }
-    
+
 }

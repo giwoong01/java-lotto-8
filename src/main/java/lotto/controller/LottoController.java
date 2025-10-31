@@ -1,5 +1,6 @@
 package lotto.controller;
 
+import lotto.domain.BonusNumber;
 import lotto.domain.LottoIssuer;
 import lotto.domain.Lottos;
 import lotto.domain.PurchaseAmount;
@@ -22,6 +23,7 @@ public class LottoController {
     public void run() {
         Lottos lottos = purchaseLottos();
         WinningNumbers winningNumbers = getWinningNumbers();
+        BonusNumber bonusNumber = getBonusNumber(winningNumbers);
 
     }
 
@@ -48,6 +50,17 @@ public class LottoController {
             try {
                 String inputWinningNumbers = inputView.inputWinningNumbers();
                 return new WinningNumbers(inputWinningNumbers);
+            } catch (IllegalArgumentException e) {
+                outputView.printErrorMessage(e.getMessage());
+            }
+        }
+    }
+
+    private BonusNumber getBonusNumber(WinningNumbers winningNumbers) {
+        while (true) {
+            try {
+                String inputBonusNumber = inputView.inputBonusNumber();
+                return new BonusNumber(inputBonusNumber, winningNumbers);
             } catch (IllegalArgumentException e) {
                 outputView.printErrorMessage(e.getMessage());
             }

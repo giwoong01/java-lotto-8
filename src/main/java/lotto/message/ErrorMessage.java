@@ -11,6 +11,10 @@ public enum ErrorMessage {
     WINNING_NUMBERS_INVALID_RANGE("당첨 번호를 다시 입력해주세요. (1부터 45사이의 숫자여야 합니다.)"),
     WINNING_NUMBERS_DUPLICATE("당첨 번호를 다시 입력해주세요. (중복된 숫자를 입력하면 안됩니다.)"),
 
+    BONUS_NUMBER_INVALID_FORMAT("보너스 번호를 다시 입력해주세요. (양의 정수만 입력해야 합니다.)"),
+    BONUS_NUMBER_INVALID_RANGE("보너스 번호를 다시 입력해주세요. (1부터 45사이의 숫자여야 합니다.)"),
+    BONUS_NUMBER_DUPLICATE("보너스 번호를 다시 입력해주세요. (당첨 번호와 중복된 숫자를 입력하면 안됩니다.)"),
+
     LOTTO_INVALID_SIZE("로또 번호는 6개여야 합니다.");
 
 
