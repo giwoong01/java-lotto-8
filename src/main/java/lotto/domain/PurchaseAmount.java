@@ -20,19 +20,19 @@ public class PurchaseAmount {
         try {
             return Integer.parseInt(value);
         } catch (NumberFormatException e) {
-            throw new IllegalArgumentException(ErrorMessage.NOT_A_NUMBER.getMessage());
+            throw new IllegalArgumentException(ErrorMessage.PURCHASE_AMOUNT_NOT_A_NUMBER.getMessage());
         }
     }
 
     private void validateIsPositive(int value) {
         if (value <= ZERO) {
-            throw new IllegalArgumentException(ErrorMessage.NOT_POSITIVE.getMessage());
+            throw new IllegalArgumentException(ErrorMessage.PURCHASE_AMOUNT_NOT_POSITIVE.getMessage());
         }
     }
 
     private void validateUnit(int value) {
         if (value % LOTTO_PRICE != ZERO) {
-            throw new IllegalArgumentException(ErrorMessage.INVALID_UNIT.getMessage());
+            throw new IllegalArgumentException(ErrorMessage.PURCHASE_AMOUNT_INVALID_UNIT.getMessage());
         }
     }
 
