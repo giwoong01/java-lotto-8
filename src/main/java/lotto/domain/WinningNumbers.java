@@ -1,7 +1,6 @@
 package lotto.domain;
 
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import lotto.message.ErrorMessage;
@@ -53,8 +52,7 @@ public class WinningNumbers {
     }
 
     private void validateNoDuplicates(List<Integer> numbers) {
-        Set<Integer> uniqueNumbers = new HashSet<>(numbers);
-        if (uniqueNumbers.size() != numbers.size()) {
+        if (Set.copyOf(numbers).size() != numbers.size()) {
             throw new IllegalArgumentException(ErrorMessage.WINNING_NUMBERS_DUPLICATE.getMessage());
         }
     }

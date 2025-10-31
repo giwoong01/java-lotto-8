@@ -1,7 +1,7 @@
 package lotto.domain.generator;
 
 import camp.nextstep.edu.missionutils.Randoms;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 
 public class RandomLottoGenerator implements LottoGenerator {
@@ -12,9 +12,7 @@ public class RandomLottoGenerator implements LottoGenerator {
 
     @Override
     public List<Integer> generate() {
-        List<Integer> numbers = Randoms.pickUniqueNumbersInRange(LOTTO_MIN_NUMBER, LOTTO_MAX_NUMBER, LOTTO_NUMBER_COUNT);
-        Collections.sort(numbers);
-        return List.copyOf(numbers);
+        return new ArrayList<>(Randoms.pickUniqueNumbersInRange(LOTTO_MIN_NUMBER, LOTTO_MAX_NUMBER, LOTTO_NUMBER_COUNT));
     }
 
 }
