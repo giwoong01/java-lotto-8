@@ -132,3 +132,73 @@
     - [x] 당첨 번호에 중복된 숫자가 있을 경우 예외 발생
     - [x] 입력값이 숫자와 쉼표(,) 이외의 문자를 포함할 경우 예외 발생
     - [x] 당첨 번호가 1 ~ 45 범위를 벗어날 경우 예외 발생
+
+## 프로젝트 구조 & 설명
+
+```
+src
+├── main
+│   └── java/lotto
+│       ├── Application.java
+│       ├── controller
+|       |   └── LottoController.java
+│       ├── domain
+|       |   ├── generator
+|       |   |   ├── LottoGenerator.java
+|       |   |   ├── RandomLottoGenerator.java
+|       |   |   └── FixedLottoGenerator.java
+|       |   ├── Lotto.java
+|       |   ├── Lottos.java
+|       |   ├── LottoIssuer.java
+|       |   ├── LottoRank.java
+|       |   ├── LottoResult.java
+|       |   ├── PurchaseAmount.java
+|       |   ├── BonusNumber.java
+|       |   ├── WinningLotto.java
+|       |   └── WinningNumbers.java
+│       ├── message
+|       |   └── ErrorMessage.java
+│       └── view
+|           ├── InputView.java
+|           └── OutputView.java
+└── test
+    └── java/lotto
+        ├── ApplicationTest.java
+        └── domain
+            ├── LottoTest.java
+            ├── LottosTest.java
+            ├── LottoIssuerTest.java
+            ├── LottoRankTest.java
+            ├── LottoResultTest.java
+            ├── PurchaseAmountTest.java
+            ├── BonusNumberTest.java
+            ├── WinningLottoTest.java
+            └── WinningNumbersTest.java
+
+```
+
+- Lotto
+    - 로또 한 장을 표현하는 객체입니다. 1~45사이의 중복되지 않는 6개의 숫자를 가지며, 생성 시점에 스스로의 유효성을 검증합니다. 당첨번호와 일치하는 번호의 개수를 세거나, 특정 번호를 포함하는지 확인하는 행위를
+      책임집니다.
+- Lottos
+    - 구매한 모든 Lotto 객체들을 관리하는 일급 컬렉션입니다. WinningLotto를 기준으로 전체 로또의 당첨 통계를 계산하는 로직을 수행합니다.
+- LottoIssuer
+    - 로또 발행이라는 서비스를 제공하는 객체입니다. PurchaseAmount를 받아 LottoGenerator를 통해 로또를 생성하고, 이를 Lottos 일급 컬렉션으로 묶어 반환하는 역할을 합니다.
+- LottoRank
+    - 1등부터 낙첨까지 각 등수에 대한 모든 정보를 가지고 있는 enum 객체입니다. 로또 한 장을 받아 최종 등수를 판별하는 책임을 가집니다.
+- LottoResult
+    - 최종 당첨 통계를 기반으로 생성되는 결과 객체입니다. 총상금을 계산하고, PurchaseAmount를 바탕으로 수익률을 계산하는 책임을 가집니다.
+- PurchaseAmount
+    - 사용자가 지불한 구입 금액을 표현하는 값 객체입니다. 생성 시점에 1,000원 단위의 양수인지 검증하며, 이 금액으로 구매할 수 있는 로또의 개수를 계산하는 책임을 가집니다.
+- BonusNumber
+    - 사용자가 입력한 보너스 번호 1개를 표현하는 값 객체입니다. 생성 시점에 번호의 유효성뿐만 아니라, WinningNumbers와 중복되지 않는지까지 검증하는 책임을 가집니다.
+- WinningLotto
+    - WinningNumbers와 BonusNumber를 조합하여 하나의 당첨 기준을 표현하는 객체입니다. 로또 한 장을 받아 최종 등수를 판별하는 책임을 가집니다.
+- WinningNumbers
+    - 사용자가 입력한 당첨 번호 6개를 표현하는 값 객체입니다. 생성 시점에 입력된 문자열을 파싱하고, 번호의 개수, 범위, 중복 여부 등 모든 유효성을 검증합니다.
+- LottoGenerator
+    - 로또 번호 생성 전략에 대한 인터페이스입니다. 이를 통해 실제 랜덤 번호 생성 로직과 테스트용 고정 번호 생성 로직을 분리하고 교체할 수 있습니다.
+- RandomLottoGenerator
+    - LottoGenerator의 구현체로, camp.nextstep.edu.missionutils.Randoms를 사용하여 실제 무작위 로또 번호를 생성합니다. 애플리케이션 실제 동작에 사용됩니다.
+- FixedLottoGenerator
+    - LottoGenerator의 구현체로, 항상 미리 정해진 고정된 번호를 반환합니다. 테스트 코드에서 예측 가능한 시나리오를 만들기 위해 사용됩니다.
