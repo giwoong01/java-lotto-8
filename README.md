@@ -101,7 +101,7 @@
     - [x] 수정이 불가능한 리스트 반환
     - [x] calculateStatistics() 메소드가 당첨 통게를 정상 계산
 - LottoIssuer
-    - [ ] issue() 메소드가 구입 금액에 맞게 로또 생성
+    - [x] issue() 메소드가 구입 금액에 맞게 로또 생성
 - LottoRank
     - [ ] valueOf() 메소드가 일치하는 번호 개수와 보너스 번호 일치 여부에 따라 정상 반환
         - 6개 일치 -> 1등
