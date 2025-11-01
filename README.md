@@ -97,7 +97,9 @@
     - [x] contains() 메소드가 특정 번호의 포함 여부 정상 반환
     - [x] countMatchingNumbers() 메소드가 당첨 번호와 일치하는 개수 정상 반환
 - Lottos
-    - [ ] calculateStatistics() 메소드가 당첨 통게를 정상 계산
+    - [x] Lottos 객체 정상 생성
+    - [x] 수정이 불가능한 리스트 반환
+    - [x] calculateStatistics() 메소드가 당첨 통게를 정상 계산
 - LottoIssuer
     - [ ] issue() 메소드가 구입 금액에 맞게 로또 생성
 - LottoRank
