@@ -27,4 +27,5 @@ public class LottoResult {
     public Map<LottoRank, Integer> getStatistics() {
         return statistics;
     }
+
 }
