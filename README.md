@@ -202,3 +202,186 @@ src
     - LottoGenerator의 구현체로, camp.nextstep.edu.missionutils.Randoms를 사용하여 실제 무작위 로또 번호를 생성합니다. 애플리케이션 실제 동작에 사용됩니다.
 - FixedLottoGenerator
     - LottoGenerator의 구현체로, 항상 미리 정해진 고정된 번호를 반환합니다. 테스트 코드에서 예측 가능한 시나리오를 만들기 위해 사용됩니다.
+
+---
+
+## 고민한 점
+
+### View를 다시 인스턴스 클래스로 바꾼 이유
+
+2주차 미션을 진행할 때, 저는 InputView와 OutputView를 static 메소드로만 구성된 유틸리티 클래스로 설계했습니다.
+
+이때 유틸리티 클래스로 구성한 이유는 “View는 별도의 상태를 갖지 않고, 순수한 입출력 기능만 제공하므로 객체 생성이 불필요한 비용”이라고 판단했었습니다. 이는 상태 없는 유틸리티 클래스에 대한 합리적인 접근이었습니다.
+
+하지만 3주차 미션을 통해 객체지향 설계에 대해 더 깊이 고민하면서, 이런 설계를 가진 한계를 깨달았습니다.
+
+static 메소드 호출은 구체적인 클래스에 직접 의존하는 것입니다. 이는 SOLID 원칙 중 하나의 의존관계 역전 원칙(DIP)을 위배합니다. Controller가 InputView라는 구체적인 구현체에 묶여버리는 것입니다.
+
+인스턴스를 주입받는 방식으로 변경함으로써, Controller는 더 이상 View의 구체적인 구현 방식에 대해 알 필요가 없어졌습니다.
+
+DIP 위배 외에도, “View는 상태가 없다”는 2주차의 초기 가정 자체가 위험할 수 있었습니다. 만약 “모든 라운드 결과를 모았다가 한 번에 출력”해야 한다면, static 클래스는 이 상태를 저장할 곳이 마땅치 않습니다. 하지만
+인스턴스 클래스는 ‘List<String> buffer’ 같은 멤버 변수(상태)를 가져 이러한 요구사항 변경에 유연하게 대응할 수 있습니다.
+
+그리고 인스턴스 방식은 생명주기, 리소스 관리를 명확하게 해준다는 장점이 있습니다.
+
+static은 애플리케이션 시작부터 종료까지 살아있는 반면에 인스턴스는 new로 생성되고 소멸되는 생명주기를 가집니다. 이 생명주기를 관리할 수 있다는 것이 중요한 차이입니다.
+
+예를 들어, “camp.nextstep.edu.missionutils.Console”은 사용이 끝나면 Console.close()를 호출해 리소스를 정리해 주어야 합니다. static View는 언제 close()를 호출해야 할지 그
+시점이 애매하고, 책임을 질 객체가 불분명합니다.
+
+하지만 Instance View는 Controller가 멤버 변수로 소유하고 있으므로, Controller의 run() 메소드가 끝나는 시점에 this.inputView.close() 처럼 소유자가 명확하게 리소스를 관리해줄 수
+있습니다.
+
+그래서 2주차의 선택이 틀렸느냐? 그 말은 아닙니다. 더 유지보수하기 좋고, 확장 가능한 코드란 무엇인지 고민하게 되었습니다.
+
+단순히 static 키워드를 제거한 것이 아닙니다. 의존성 주입을 통해 유연한 설계를 구현하고, 상태와 생명주기 관리의 책임을 명확히 하여, 객체지향의 핵심 원칙을 코드로 실천하는 과정이었습니다.
+
+### 에러 메시지 관리 방법
+
+애플리케이션에서 발생하는 다양한 예외 상황에 대한 에러 메시지를 일관되게 관리하는 것은 매우 중요합니다.
+
+처음에는 이 메시지들을 public static final String 상수로 하여 유틸리티 클래스에 모아두는 방식을 사용했습니다.
+
+이 방법이 모든 메시지를 한곳에서 관리할 수 있어서 편리해 보였습니다.
+
+```java
+// 초기 에러 메시지 유틸리티 클래스
+public class ErrorMessage {
+    public static final String ERROR_MESSAGE_INVALID_UNIT = "[ERROR] ~~~";
+}
+```
+
+하지만 이 방식은 여러 가지 한계가 있었습니다.
+
+문제는 String이라는 원시 타입이 가진 본질적인 한계였습니다. 컴파일러 입장에서 ErrorMessage.INVALID_UNIT과 단순한 문자열 “Hello”는 구분되지 않는 같은 String 타입입니다. 이는 잠재적인 버그로
+이어질 수 있으며, 코드의 의도를 명확히 전달하는데 방해가 되었습니다.
+
+더 큰 문제는 책임의 분산이었습니다. 모든 에러 메시지에 “[ERROR]”이라는 접두사를 붙여야 하는 요구사항 이었는데, 이 책임을 각 상수 문자열이 개별적으로 나눠서 지고 있었습니다. 만약 접두사를 [Error]로 변경해야 한다면,
+모든 상수를 하나씩 찾아 수정해야만 했습니다. 이는 DRY(Don't Repeat Yourself, 중복배제) 원칙을 위배하며 실수가 발생하기 쉬운 구조였습니다.
+
+이런 문제들을 해결하기 위해 저는 enum을 도입했습니다. enum은 단순히 상수를 나열하는 도구가 아니라, 상태와 행위를 함께 가지는 온전한 객체입니다.
+
+```java
+//Enum 클래스
+public enum ErrorMessage {
+    INVALID_UNIT("구입 금액을 다시 입력해주세요. (1,000원 단위여야 합니다.)"),
+    // ...
+
+    private static final String PREFIX = "[ERROR] ";
+    private final String message;
+
+    ErrorMessage(String message) {
+        this.message = message;
+    }
+
+    public String getMessage() {
+        return PREFIX + message;
+    }
+    }
+```
+
+enum으로 전환함으로써 다양한 이점들을 얻을 수 있었습니다.
+
+첫 번째로, 에러 메시지는 ErrorMessage라는 고유한 타입을 가집니다. 코드의 안정성을 높이고, 메소드 시그니처만으로도 어떤 종류의 메시지가 필요한지 명확하게 알 수 있게 해줍니다.
+
+두 번째로, [ERROR] 접두사를 붙이는 책임은 이제 전적으로 enum의 getMessage() 메소드가 담당합니다. 각 enum 상수는 순수한 메시지 내용에만 집중할 수 있게 되었고, 접두사 포맷 변경이 필요한 경우 단 한 곳만
+수정하면 됩니다.
+
+세 번째로, 가독성과 유지보수성이 향상되었습니다.
+
+예를 들어,
+
+```java
+throw new IlleagalArgumentException(ErrorMessage.INVALID_UNIT.getMessage());
+```
+
+와 같은 코드는 “INVALID_UNIT이라는 특정 타입의 에러 메시지를 가져와 예외를 발생시킨다.”라는 의도를 명확하게 드러냅니다.
+
+이와 같이 에러 메시지 관리에 enum을 도입한 것은 단순한 코드 변경을 넘어서 더 견고하고 유지보수하기 좋은 설계였음을 깨달았습니다.
+
+### View에서 Domain을 알아도 되는가?
+
+이번 미션을 진행하면서 가장 고민했던 부분 중 하나는 “View가 Domain 객체를 알아도 되는가” 였습니다.
+
+객체지향의 계층형 아키텍처 원칙에 따르면, Veiw는 비즈니스 로직을 담고 있는 Domain 계층에 직접 의존해서는 안됩니다. 각 계층의 관심사를 명확히 분리하여 유연하고 확장 가능한 구조를 만들기 위함입니다.
+
+저는 이 원칙을 지키기 위해 처음에 Controller가 중간에서 DTO에 데이터를 담아 보내는 설계를 고려했습니다.
+
+1. Controller가 LottoIssuer로 부터 Lottos라는 도메인 객체르 받는다.
+2. Controller는 Lottos 객체에서 View에 필요한 데이터만 추출하여 LottosDto라는 순수한 데이터 전송 객체로 변환한다.
+3. View는 이 LottosDto만 전달받아, 도메인 로직에 대한 정보 없이 오직 화면에 데이터를 그리는 책임만 수행한다.
+
+이 방식은 View와 Domain의 결합을 없게하여, 도메인의 변경이 View에 영향을 주지 않고, 그 반대도 마찬가지인 구조입니다.
+
+하지만 이 구조는 현재 프로젝트 규모에서 몇 가지 문제점이 있었습니다.
+
+화면에 데이터를 표시하기 위해 매번 DTO 클래스를 추가로 정의하고, Controller에서 도메인 객체를 DTO로 변환하는 코드를 작성해야 했습니다. 이는 코드의 양을 더 늘리고, 데이터 흐름을 추적하는 데 불필요한 복잡성을 더하는
+것처럼 느껴졌습니다.
+
+그래서 고민하고 고민한 끝에 “정해진 규칙 하에 제어된 의존성은 허용한다”는 타협안을 선택했습니다.
+
+여기서 규칙은 아래와 같습니다.
+
+“View는 Domain 객체를 오직 화면 표시에 필요한 데이터를 조회(Read-Only)하는 용도로만 사용해야 한다. 상태를 변경하거나 복잡한 비즈니스 로직을 담은 메소드를 호출해서는 안된다”
+
+현재 OutputView의 printPurchasedLottos 메소드는 Lottos 객체를 전달받지만, getCount()나 getLottos()와 같이 상태를 변경하지 않는 단순 조회 메소드만 호출합니다.
+
+```java
+public void printPurchasedLottos(Lottos lottos) {
+    System.out.printf(OUTPUT_MESSAGE_PURCHASE_COUNT, lottos.getCount());
+    lottos.getLottos().forEach(lotto -> System.out.println(lotto.getNumbers()));
+}
+```
+
+이런 접근은 DTO를 만드는 비용 없이 코드를 간결하게 유지하면서도, View가 Domain의 핵심 로직을 침범하지 못하도록 역할을 제한하는 방법이었습니다.
+
+결론적으로, 저는 무조건적인 분리보다는 프로젝트의 규모와 복잡도에 맞는 트레이드오프를 고려하는 것이 좋은 설계의 핵심이었습니다.
+
+### LottoRank enum 클래스. BiPredicate, 전략 패턴 적용
+
+LottoRank enum을 어떻게 설계할지, 이 부분에서 많은 고민이 있었습니다.
+
+처음에는 ‘등수’를 판별하는 거니까, valueOf라는 메소드 하나에 “if (matchCount == 6) …” 이런식으로 절차적인 if 로직을 전부 넣는 방색을 생각했습니다. 이 방법이 가장 직관적이고 단순해 보였기 때문입니다.
+
+하지만 이렇게 구현하면 몇 가지 문제가 보였습니다.
+
+valueOf 메소드 하나가 너무 비대해지고, ‘등수’라는 데이터는 enum이 가지고 ‘판별 로직’은 valueOf가 갖게 돼서 책임이 분산되는 것 같았습니다.
+
+무엇보다 가장 큰 문제는, 만약 2.5등 같은 새로운 등수 규칙이 생긴다면 valueOf 메소드의 if문 자체를 직접 수정해야 한다는 점이었습니다. 이건 개방-폐쇄 원칙(OCP)에 어긋난다고 생각했습니다.
+
+그래서 각 enum 상수가 자신의 판별 규칙을 스스로 책임지게 하자는 방향을 잡았습니다.
+
+BIPredicate<Integer, Boolean>라는 함수형 인터페이스가 일치 개수와 보너스 여부라는 두 개의 입력을 받아 true/false를 반환하기에 딱 맞았습니다. 이것을 전략처럼 각 enum 상수가 직접 갖도록
+설계했습니다.
+
+```java
+public enum LottoRank {
+
+    FIRST(2_000_000_000, "6개 일치", (matchCount, matchBonus) -> matchCount == 6),
+    SECOND(30_000_000, "5개 일치, 보너스 볼 일치", (matchCount, matchBonus) -> matchCount == 5 && matchBonus),
+    THIRD(1_500_000, "5개 일치", (matchCount, matchBonus) -> matchCount == 5 && !matchBonus),
+    // ...
+    MISS(0, "낙첨", (matchCount, matchBonus) -> true);
+
+    // ...
+    private final BiPredicate<Integer, Boolean> isMatch;
+
+    LottoRank(int prizeMoney, String description, BiPredicate<Integer, Boolean> isMatch) {
+        // ...
+        this.isMatch = isMatch;
+    }
+
+    public static LottoRank valueOf(int matchCount, boolean matchBonus) {
+        return Arrays.stream(values())
+                .filter(rank -> rank.isMatch.test(matchCount, matchBonus))
+                .findFirst()
+                .orElse(MISS);
+    }
+}
+```
+
+이와 같이 구현하면서 가장 큰 장점은 OCP를 지킬 수 있게 된 점입니다. 나중에 새로운 등수 규칙이 생겨도 valueOf 메소드는 수정할 필요가 없습니다.
+
+그리고 First라는 상수가 1등 상금 정보뿐만 아니라, 1등이 되는 방법까지 스스로 알게되면서 등수라는 객체의 응집도가 높아졌습니다.
+
+단순히 if문을 없애는 것이 목적이 아니라, 객체에게 올바른 책임을 맡기고 변화에 유연하게 대응하기 위해 이 설계를 선택하게 되었습니다.
